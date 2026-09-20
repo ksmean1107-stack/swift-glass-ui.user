@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Swift Glass UI
 // @namespace    http://tampermonkey.net/
-// @version      SGU 0.0.3-Alpha-3
-// @description  0.0.3: 슬라이더 버벅임 수정·이미지 미리 불러오기 강화·앱 열기 배너 숨김·설정창 글래스 모프 열기 / 0.0.2: iOS 27 설정 앱 스타일 설정 화면 / 0.0.1: 최초 작성
+// @version      SGU 1.0.0-Beta-1
+// @description  1.0.0: 스크롤 버벅임 수정(리사이즈·클래스 감시 부하 제거)·맨 위로 버튼 즉시 표시/즉시 이동·iOS식 고무줄 슬라이더 / 0.0.3: 슬라이더 최적화·앱 배너 숨김·모프 열기 / 0.0.1: 최초 작성
 // @author       You
 // @match        https://*/*
 // @run-at       document-start
@@ -155,9 +155,9 @@ dialog::backdrop{background:rgba(0,0,0,.28);-webkit-backdrop-filter:blur(16px) s
 
     /* ───── 설정 창 (iOS 26·27 메뉴처럼 버튼에서 유리 방울이 커지며 열림 + iOS 27 설정 앱 스타일) ───── */
 
-    const VER = 'SGU 0.0.3-Alpha-3';
+    const VER = 'SGU 1.0.0-Beta-1';
     const SH = `
-:host{all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none;color:var(--c);font:16px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo",system-ui,sans-serif;--e:cubic-bezier(.32,.72,0,1);--bgc:242 242 247;--card:#fff;--c:#000;--c2:rgba(60,60,67,.6);--sep:rgba(60,60,67,.2);--off:rgba(120,120,128,.16);--rail:rgba(120,120,128,.2);--lens:rgba(255,255,255,.4);--gr:#34c759;--g:255 255 255;--a:.6}
+:host{all:initial;position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;color:var(--c);font:16px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo",system-ui,sans-serif;--e:cubic-bezier(.32,.72,0,1);--bgc:242 242 247;--card:#fff;--c:#000;--c2:rgba(60,60,67,.6);--sep:rgba(60,60,67,.2);--off:rgba(120,120,128,.16);--rail:rgba(120,120,128,.2);--lens:rgba(255,255,255,.4);--gr:#34c759;--g:255 255 255;--a:.6}
 @media (prefers-color-scheme:dark){:host{--bgc:0 0 0;--card:#1c1c1e;--c:#fff;--c2:rgba(235,235,245,.6);--sep:rgba(84,84,88,.65);--off:#39393d;--rail:#3a3a3c;--lens:rgba(58,58,62,.5);--gr:#30d158;--g:44 44 46}}
 [hidden]{display:none!important}
 .b{all:unset;box-sizing:border-box;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -165,15 +165,23 @@ dialog::backdrop{background:rgba(0,0,0,.28);-webkit-backdrop-filter:blur(16px) s
 .glass{background:rgb(var(--g)/var(--a));-webkit-backdrop-filter:blur(28px) saturate(1.8);backdrop-filter:blur(28px) saturate(1.8);box-shadow:0 0 0 .5px rgba(0,0,0,.25),inset 0 1px .5px rgba(255,255,255,.6),inset 0 -1px .5px rgba(255,255,255,.14),0 12px 32px rgba(0,0,0,.2)}
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more){.glass{background:rgb(var(--g));-webkit-backdrop-filter:none;backdrop-filter:none}.page{background:rgb(var(--bgc));-webkit-backdrop-filter:none;backdrop-filter:none}}
 svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.dock{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 22px);display:flex;padding:4px;border-radius:28px;pointer-events:auto;opacity:.62;transition:opacity .3s,transform .4s var(--e)}
-.dock:hover,.dock:focus-within,.dock:active{opacity:1}
-.open .dock{opacity:0;transform:scale(.7);pointer-events:none}
+.dock{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 22px);display:flex;gap:8px;pointer-events:none;transition:opacity .3s,transform .4s var(--e)}
+.dock>*{pointer-events:auto}
+.open .dock{opacity:0;transform:scale(.7)}
+.open .dock>*{pointer-events:none}
 .ib{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;transition:transform .35s var(--e),background .2s}
 .ib:active{transform:scale(.88);background:rgb(128 128 128/.28)}
+.dk{width:48px;height:48px;opacity:.72;transition:opacity .3s,transform .35s var(--e),background .2s}
+.dk:hover,.dk:focus-visible{opacity:1}
+.up{opacity:0;visibility:hidden;transform:scale(.6)}
+.up.show{opacity:.72;visibility:visible;transform:none}
+@supports (animation-timeline:scroll()){.up{animation:upin linear both;animation-timeline:scroll(root);animation-range:400px 520px}}
+@keyframes upin{from{opacity:0;visibility:hidden;transform:scale(.6)}to{opacity:.72;visibility:visible;transform:none}}
 .dim{position:fixed;inset:0;background:rgba(0,0,0,.2);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s,visibility 0s .4s}
 .open .dim{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .4s}
 .page{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:min(392px,calc(100% - 24px));height:min(740px,calc(100% - 72px));overflow:hidden;border-radius:50%;background:rgb(var(--bgc)/.86);-webkit-backdrop-filter:blur(30px) saturate(1.8);backdrop-filter:blur(30px) saturate(1.8);box-shadow:0 0 0 .5px rgba(0,0,0,.3),inset 0 1px .5px rgba(255,255,255,.35),0 24px 64px rgba(0,0,0,.4);pointer-events:auto;outline:0;opacity:0;visibility:hidden;transform:scale(.1);transition:transform .45s var(--e),border-radius .45s var(--e),opacity .18s .12s,visibility 0s .45s}
 .open .page{opacity:1;visibility:visible;transform:none;border-radius:36px;transition:transform .5s var(--e),border-radius .5s var(--e),opacity .12s}
+.idle{content-visibility:hidden}
 .sv{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .in{padding-bottom:20px;opacity:0;filter:blur(8px);transition:opacity .2s,filter .2s}
 .open .in{opacity:1;filter:none;transition:opacity .3s .12s,filter .35s .1s}
@@ -199,15 +207,20 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 .sw[aria-checked=true]::after{transform:translateX(18px)}
 .sw:active::after{width:45px}
 .sw[aria-checked=true]:active::after{transform:translateX(12px)}
-.sl{gap:14px;min-height:66px}
+.sl{min-height:66px}
+.sb{display:flex;align-items:center;gap:14px;flex:1;min-width:0;will-change:transform;transition:transform .65s cubic-bezier(.34,1.56,.64,1)}
+.sb.on{transition:none}
 .si{flex:none;color:var(--c2)}
 .f{fill:currentColor}
 .tr{position:relative;flex:1;height:44px;touch-action:none;cursor:pointer;outline:0;-webkit-tap-highlight-color:transparent}
 .rail{position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;border-radius:3px;background:var(--rail);overflow:hidden}
 .fl{position:absolute;inset:0;background:#0a84ff;transform-origin:0 50%;transform:scaleX(0);will-change:transform}
 .pt{position:absolute;left:0;top:50%;width:0;height:0;will-change:transform}
-.th{position:absolute;left:0;top:0;width:39px;height:23px;transform:translate(-50%,-50%);border-radius:999px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:width .35s var(--e),height .35s var(--e),background .25s,box-shadow .25s}
-.on .th{width:58px;height:37px;background:linear-gradient(rgba(255,255,255,.16),rgba(255,255,255,0) 45%),var(--lens);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 2px 2px rgba(255,255,255,.3),inset 0 -3px 4px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.4)}
+.th{position:absolute;left:0;top:0;width:39px;height:23px;transform:translate(-50%,-50%);border-radius:999px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:width .35s var(--e),height .35s var(--e),background-color .25s,box-shadow .25s,transform .55s cubic-bezier(.34,1.56,.64,1)}
+.th::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(rgba(255,255,255,.18),rgba(255,255,255,0) 50%),var(--lens);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 2px 2px rgba(255,255,255,.28),inset 0 -3px 4px rgba(0,0,0,.35);opacity:0;transition:opacity .25s}
+.th::after{content:"";position:absolute;left:14%;right:14%;top:50%;height:8px;margin-top:-4px;border-radius:4px;background:rgba(255,255,255,.14);filter:blur(1px);opacity:0;transition:opacity .25s}
+.on .th{width:58px;height:37px;background-color:transparent;box-shadow:0 6px 16px rgba(0,0,0,.4);transition:width .35s var(--e),height .35s var(--e),background-color .25s,box-shadow .25s}
+.on .th::before,.on .th::after{opacity:1}
 .tr:focus-visible .th{outline:2px solid #0a84ff;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{:host{display:none}}
@@ -261,34 +274,52 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
                 onclick() { this.setAttribute('aria-checked', String((S[k] = !S[k]))); save(); },
             }));
 
-        // 버벅임 방지: 드래그 중엔 transform(합성 전용)만 갱신, 레이아웃 읽기는 터치 시작 때 1번, 유리 투명도·문서 스타일은 손 뗄 때 1번
+        // iOS 슬라이더: 흰 알약 → 글래스 렌즈, 끝을 넘겨 당기면 전체가 고무줄처럼 늘어났다가 튕겨 돌아옴
+        // 버벅임 방지: 드래그 중엔 transform(합성 전용)만 갱신, 레이아웃 읽기는 터치 시작 때 1번, 문서 스타일은 손 뗄 때 1번
         const slider = () => {
-            const TW = 39; // 평소 손잡이 너비
+            const TW = 39, MAX = 24; // 평소 손잡이 너비, 최대 늘어남(px)
             const th = h('div', { className: 'th' }), pt = h('div', { className: 'pt' }, th), fl = h('div', { className: 'fl' });
             const tr = h('div', {
                 className: 'tr', role: 'slider', tabindex: 0, 'aria-label': '유리 투명도', 'aria-valuemin': 0, 'aria-valuemax': 100,
             }, h('div', { className: 'rail' }, fl), pt);
-            let w = 0, x0 = 0, cx = 0, raf = 0;
+            const sb = h('div', { className: 'sb' }, icon(CIRCLE, 'si'), tr, icon(CIRCLE, 'si f'));
+            let w = 0, bw = 0, x0 = 0, off = 0, cx = 0, st = 0, raf = 0;
+            const rb = o => Math.sign(o) * MAX * (1 - 1 / (Math.abs(o) * 0.55 / MAX + 1)); // iOS식 고무줄 감쇠
             const draw = () => {
                 raf = 0;
                 if (!w) return;
+                const k = 1 + Math.abs(st) / (bw || 1);
+                if (st) sb.style.transformOrigin = st > 0 ? '0 50%' : '100% 50%';
                 pt.style.transform = `translate3d(${cx}px,0,0)`;
                 fl.style.transform = `scaleX(${cx / w})`;
+                sb.style.transform = `scaleX(${k})`;
+                th.style.transform = `translate(-50%,-50%) scaleX(${(1 - 0.12 * Math.min(1, Math.abs(st) / 16)) / k})`;
+                tr.setAttribute('aria-valuenow', Math.round(S.t * 100));
             };
+            const go = () => { raf || (raf = requestAnimationFrame(draw)); };
             const put = v => {
                 S.t = Math.min(1, Math.max(0, v));
                 cx = TW / 2 + S.t * (w - TW);
-                tr.setAttribute('aria-valuenow', Math.round(S.t * 100));
-                raf || (raf = requestAnimationFrame(draw));
+                st = 0;
+                go();
             };
-            const sync = () => { w = tr.clientWidth; put(S.t); };
-            const pos = e => put((e.clientX - x0 - TW / 2) / (w - TW));
-            const end = () => { tr.classList.remove('on'); paintHost(); paintPage(); save(); };
+            const sync = () => { w = tr.clientWidth; bw = sb.clientWidth; put(S.t); };
+            const pos = e => {
+                const raw = e.clientX - x0 + off, c = Math.min(w - TW / 2, Math.max(TW / 2, raw));
+                S.t = (c - TW / 2) / (w - TW);
+                cx = c;
+                st = rb(raw - c);
+                go();
+            };
+            const end = () => { sb.classList.remove('on'); st = 0; go(); paintHost(); paintPage(); save(); };
             tr.addEventListener('pointerdown', e => {
                 w = tr.clientWidth;
+                bw = sb.clientWidth;
                 x0 = tr.getBoundingClientRect().left;
+                const x = e.clientX - x0;
+                off = Math.abs(x - cx) < TW / 2 + 8 ? cx - x : 0; // 손잡이를 잡으면 튀지 않고, 트랙을 누르면 그 위치로
                 tr.setPointerCapture(e.pointerId);
-                tr.classList.add('on');
+                sb.classList.add('on');
                 pos(e);
             });
             tr.addEventListener('pointermove', e => { if (tr.hasPointerCapture(e.pointerId)) pos(e); });
@@ -298,45 +329,48 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
                 const d = { ArrowRight: 0.05, ArrowUp: 0.05, ArrowLeft: -0.05, ArrowDown: -0.05 }[e.key];
                 if (d) { e.preventDefault(); put(S.t + d); paintHost(); paintPage(); save(); }
             });
-            return [tr, sync];
+            return [sb, sync];
         };
         const [sl, sync] = slider();
 
         const bk = h('button', { className: 'b ib glass', 'aria-label': '닫기', onclick: () => show(false) }, icon('M6 6l12 12M18 6L6 18'));
-        const page = h('div', { className: 'page', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Swift Glass UI 설정', tabindex: -1 },
+        const page = h('div', { className: 'page idle', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Swift Glass UI 설정', tabindex: -1 },
             h('div', { className: 'sv' }, h('div', { className: 'in' },
                 h('div', { className: 'nav' }, bk, h('h1', { className: 'ti' }, 'Swift Glass UI')),
                 ...R.map(([hd, rows, ft]) => sec(hd, rows.map(row), ft)),
-                sec('유리 투명도', [h('div', { className: 'row sl' }, icon(CIRCLE, 'si'), sl, icon(CIRCLE, 'si f'))],
+                sec('유리 투명도', [h('div', { className: 'row sl' }, sl)],
                     '맑게부터 진하게까지 조절해요. 투명도 줄이기가 켜져 있으면 항상 불투명하게 보여요.'),
                 sec(null, [h('button', { className: 'b row act', onclick: () => location.reload() }, '새로 고침하여 적용')],
                     '설정은 이 사이트에만 저장되고, 새로 고침하면 적용돼요.'),
                 sec(null, [h('div', { className: 'row' }, h('span', {}, '버전'), h('span', { className: 'val' }, VER))]))));
 
+        // 맨 위로: 스크롤 타임라인(CSS)으로 표시 → 메인 스레드가 바빠도(관성 스크롤 중에도) 즉시 나타남. 이동은 즉시(부드러운 스크롤 X)
         const up = h('button', {
-            className: 'b ib', hidden: true, 'aria-label': '맨 위로',
-            onclick: () => scrollTo({ top: 0, behavior: 'smooth' }),
+            className: 'b ib dk up glass', 'aria-label': '맨 위로',
+            onclick: () => scrollTo({ top: 0, behavior: 'instant' }),
         }, icon('M6 15l6-6 6 6'));
-        const gear = h('button', { className: 'b ib', 'aria-label': 'Swift Glass UI 설정', onclick: () => show(true) },
+        const gear = h('button', { className: 'b ib dk glass', 'aria-label': 'Swift Glass UI 설정', onclick: () => show(true) },
             icon('M4 8h8.5M17.5 8H20M4 16h2.5M11.5 16H20M12.5 8a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0M6.5 16a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0'));
-        const wrap = h('div', {}, h('div', { className: 'dim', onclick: () => show(false) }), h('div', { className: 'dock glass' }, up, gear), page);
+        const wrap = h('div', {}, h('div', { className: 'dim', onclick: () => show(false) }), h('div', { className: 'dock' }, gear, up), page);
 
-        // 열기/닫기: 설정 버튼 위치에서 유리 방울이 커지고, 닫을 땐 다시 버튼으로 빨려 들어감
+        // 열기/닫기: 설정 버튼 위치에서 유리 방울이 커지고, 닫을 땐 다시 버튼으로 빨려 들어감. 닫힌 동안엔 내부 렌더링 생략
         const show = on => {
             if (on) {
+                page.classList.remove('idle');
                 const g = gear.getBoundingClientRect();
                 page.style.transformOrigin = `${g.left + g.width / 2 - page.offsetLeft}px ${g.top + g.height / 2 - page.offsetTop}px`;
+                wrap.classList.add('open');
                 sync();
+            } else {
+                wrap.classList.remove('open');
+                setTimeout(() => wrap.classList.contains('open') || page.classList.add('idle'), 650);
             }
-            wrap.classList.toggle('open', on);
             (on ? page : gear).focus({ preventScroll: true });
         };
         page.firstChild.addEventListener('scroll', e => page.classList.toggle('sc', e.target.scrollTop > 4), { passive: true });
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('open')) show(false); });
-        addEventListener('resize', sync);
-
-        let q;
-        addEventListener('scroll', () => q || (q = requestAnimationFrame(() => { q = 0; up.hidden = scrollY < 600; })), { passive: true });
+        // 스크롤 타임라인 미지원 브라우저용 폴백 (resize 리스너는 Safari 툴바 접힘마다 강제 레이아웃을 일으켜 제거)
+        if (!CSS.supports('animation-timeline', 'scroll()')) addEventListener('scroll', () => up.classList.toggle('show', scrollY > 460), { passive: true });
 
         root.append(wrap);
         document.documentElement.append(host);
@@ -346,9 +380,10 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
     ready(mount);
 
     if (S.g || S.b) {
-        let t;
+        let t, ls = 0;
         const run = () => { S.g && scan(); S.b && sweep(); };
-        const later = () => { clearTimeout(t); t = setTimeout(run, 500); };
+        const later = () => { clearTimeout(t); t = setTimeout(() => Date.now() - ls < 400 ? later() : run(), 600); }; // 스크롤 중엔 강제 레이아웃 방지
+        addEventListener('scroll', () => { ls = Date.now(); }, { passive: true });
         const start = () => {
             run();
             const mo = new MutationObserver(later);
