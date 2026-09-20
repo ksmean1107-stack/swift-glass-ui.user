@@ -2,7 +2,7 @@
 // @name         Swift Glass UI
 // @namespace    http://github.com/ksmean1107
 // @version      SGU 1.0.0-Beta-1
-// @description  1.0.0: 스크롤 버벅임 수정(리사이즈·클래스 감시 부하 제거)·맨 위로 버튼 즉시 표시/즉시 이동·iOS식 고무줄 슬라이더 / 0.0.3: 슬라이더 최적화·앱 배너 숨김·모프 열기 / 0.0.1: 최초 작성 / 업데이트 테스트
+// @description  1.0.0: 스크롤 버벅임 수정(리사이즈·클래스 감시 부하 제거)·맨 위로 버튼 즉시 표시/즉시 이동·iOS식 고무줄 슬라이더 / 0.0.3: 슬라이더 최적화·앱 배너 숨김·모프 열기 / 0.0.1: 최초 작성
 // @downloadURL  https://github.com/ksmean1107-stack/swift-glass-ui.user/swift-glass-ui.user.js
 // @updateURL    https://github.com/ksmean1107-stack/swift-glass-ui.user/swift-glass-ui.user.js
 // @author       ksmean1107
