@@ -261,7 +261,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
                 onclick() { this.setAttribute('aria-checked', String((S[k] = !S[k]))); save(); },
             }));
 
-        // 버벅임 방지: 이동은 transform(합성 전용)만, 레이아웃 읽기는 터치 시작 때 1번, 전체 문서 스타일은 손 뗄 때 1번
+        // 버벅임 방지: 드래그 중엔 transform(합성 전용)만 갱신, 레이아웃 읽기는 터치 시작 때 1번, 유리 투명도·문서 스타일은 손 뗄 때 1번
         const slider = () => {
             const TW = 39; // 평소 손잡이 너비
             const th = h('div', { className: 'th' }), pt = h('div', { className: 'pt' }, th), fl = h('div', { className: 'fl' });
@@ -274,7 +274,6 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
                 if (!w) return;
                 pt.style.transform = `translate3d(${cx}px,0,0)`;
                 fl.style.transform = `scaleX(${cx / w})`;
-                paintHost();
             };
             const put = v => {
                 S.t = Math.min(1, Math.max(0, v));
@@ -284,7 +283,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
             };
             const sync = () => { w = tr.clientWidth; put(S.t); };
             const pos = e => put((e.clientX - x0 - TW / 2) / (w - TW));
-            const end = () => { tr.classList.remove('on'); paintPage(); save(); };
+            const end = () => { tr.classList.remove('on'); paintHost(); paintPage(); save(); };
             tr.addEventListener('pointerdown', e => {
                 w = tr.clientWidth;
                 x0 = tr.getBoundingClientRect().left;
@@ -297,7 +296,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
             tr.addEventListener('pointercancel', end);
             tr.addEventListener('keydown', e => {
                 const d = { ArrowRight: 0.05, ArrowUp: 0.05, ArrowLeft: -0.05, ArrowDown: -0.05 }[e.key];
-                if (d) { e.preventDefault(); put(S.t + d); paintPage(); save(); }
+                if (d) { e.preventDefault(); put(S.t + d); paintHost(); paintPage(); save(); }
             });
             return [tr, sync];
         };
