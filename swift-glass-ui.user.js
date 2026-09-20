@@ -3,8 +3,8 @@
 // @namespace    http://tampermonkey.net/
 // @version      SGU 1.0.0-Beta-1
 // @description  1.0.0: 스크롤 버벅임 수정(리사이즈·클래스 감시 부하 제거)·맨 위로 버튼 즉시 표시/즉시 이동·iOS식 고무줄 슬라이더 / 0.0.3: 슬라이더 최적화·앱 배너 숨김·모프 열기 / 0.0.1: 최초 작성
-// @downloadURL  ttps://raw.githubusercontent.com/ksmean1107-stack/swift-glass-ui.user/refs/heads/main/swift-glass-ui.user.js
-// @updateURL    ttps://raw.githubusercontent.com/ksmean1107-stack/swift-glass-ui.user/refs/heads/main/swift-glass-ui.user.js
+// @downloadURL  https://raw.githubusercontent.com/ksmean1107-stack/swift-glass-ui.user/refs/heads/main/swift-glass-ui.user.js
+// @updateURL    https://raw.githubusercontent.com/ksmean1107-stack/swift-glass-ui.user/refs/heads/main/swift-glass-ui.user.js
 // @author       You
 // @match        https://*/*
 // @run-at       document-start
