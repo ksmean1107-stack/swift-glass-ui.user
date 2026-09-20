@@ -16,7 +16,7 @@
 
     if (document.contentType !== 'text/html') return;
 
-    /* ───── 설정 (사이트별 localStorage 저장, 알려진 키만 타입 검증 후 사용) 혹시 ───── */
+    /* ───── 설정 (사이트별 localStorage 저장, 알려진 키만 타입 검증 후 사용) ───── */
     const KEY = '__sgu';
     const D = { l: true, s: true, p: true, u: true, g: true, b: true, t: 0.5 };
     const S = { ...D };
