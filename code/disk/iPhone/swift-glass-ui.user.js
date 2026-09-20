@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Swift Glass UI test
+// @name         Swift Glass UI
 // @namespace    http://github.com/ksmean1107
 // @version      SGU 1.0.0-Beta-1
 // @description  1.0.0: 스크롤 버벅임 수정(리사이즈·클래스 감시 부하 제거)·맨 위로 버튼 즉시 표시/즉시 이동·iOS식 고무줄 슬라이더 / 0.0.3: 슬라이더 최적화·앱 배너 숨김·모프 열기 / 0.0.1: 최초 작성
@@ -16,7 +16,7 @@
 
     if (document.contentType !== 'text/html') return;
 
-    /* ───── 설정 (사이트별 localStorage 저장, 알려진 키만 타입 검증 후 사용) ───── */
+    /* ───── 설정 (사이트별 localStorage 저장, 알려진 키만 타입 검증 후 사용) 혹시 ───── */
     const KEY = '__sgu';
     const D = { l: true, s: true, p: true, u: true, g: true, b: true, t: 0.5 };
     const S = { ...D };
