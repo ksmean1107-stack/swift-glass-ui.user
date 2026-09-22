@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Swift Glass UI
 // @namespace    http://tampermonkey.net/
-// @version      SGU 3.2.0
-// @description  3.2.0: 하단 늘리기가 화면 끝보다 넉넉히 더 내려가 어떤 상황(고무줄 스크롤 등)에도 흰 여백이 안 보이게·감지 기준 완화로 더 많은 사이트에서 동일하게 동작·적용 시점을 이미지 등 다 받은 뒤(load)가 아니라 HTML 해석 직후(DOMContentLoaded)로 앞당겨 바뀌는 모습이 거의 안 보이게·재적용 속도 단축·이미지·연결 최적화 강화 / 3.1.3: 기능별 오류 분리 / 0.0.1: 최초 작성
+// @version      SGU 3.2.1
+// @description  3.2.1: 하단 늘리기가 화면 끝보다 더 늘어나 스크롤까지 함께 길어지던 버그 수정(정확히 화면 끝까지만) / 계속 켜져서 늦게 바뀌는 페이지도 놓치지 않도록 주기적 재확인 추가 / 이미지·연결 최적화 추가 강화 / 3.2.0: 감지 완화·DOMContentLoaded 적용 / 0.0.1: 최초 작성
 // @author       You
 // @match        https://*/*
 // @run-at       document-start
@@ -79,7 +79,7 @@
                 if (t === 'img') {
                     if (!e.hasAttribute('decoding')) e.decoding = 'async'; // 디코딩을 메인 스레드 밖에서
                     if (e.hasAttribute('loading') || e.hasAttribute('fetchpriority')) return;
-                    ++c > 4 ? lazy(e) : c < 3 && e.setAttribute('fetchpriority', 'high'); // 첫 2장은 우선, 5번째부터 지연
+                    ++c > 6 ? lazy(e) : c < 4 && e.setAttribute('fetchpriority', 'high'); // 첫 3장은 우선, 7번째부터 지연
                 } else if (t === 'iframe') { if (!e.hasAttribute('loading')) lazy(e); }
                 else if (e.autoplay) { if (t === 'video' && e.muted && e.loop) vio.observe(e); } // 장식용 자동재생 영상은 화면 밖에서 정지
                 else if (e.getAttribute('preload') !== 'none') e.preload = 'metadata';
@@ -124,7 +124,7 @@
             const canLink = document.createElement('link').relList?.supports?.('prefetch');
             const go = e => {
                 const a = e.target.closest?.('a[href]');
-                if (!a || a.origin !== location.origin || a.hasAttribute('download') || seen.size >= 12) return;
+                if (!a || a.origin !== location.origin || a.hasAttribute('download') || seen.size >= 24) return;
                 const p = a.pathname + a.search;
                 if (p === location.pathname + location.search || seen.has(p) || bad.test(p)) return;
                 seen.add(p);
@@ -274,18 +274,18 @@ dialog::backdrop{background:rgba(0,0,0,.28);-webkit-backdrop-filter:blur(16px) s
         }
         // 뷰포트 픽셀값 대신 100dvh(동적 뷰포트 높이)로 계산: Safari는 주소창이 접혔다 펼쳐질 때 innerHeight가 실제 화면과 어긋나는 경우가 있는데,
         // dvh는 브라우저가 주소창 상태에 맞춰 실시간으로 값을 다시 계산해 주기 때문에 우리가 다시 실행하지 않아도 항상 화면 끝에 맞음.
-        // 화면 정확히 끝까지가 아니라 그보다 넉넉히(BUF) 더 내려가게 해서, 고무줄처럼 당겨 보거나 화면 회전·키보드 표시 등으로 순간적으로 생기는 여백도 항상 같은 색으로 덮음
-        const BUF = 1200;
+        // 정확히 화면 끝까지만 — 그 이상 늘리면 스크롤할 수 있는 범위 자체가 길어져서(빈 공간을 스크롤하게 됨) 여기서는 여유분을 두지 않음
         const top = E.getBoundingClientRect().top + scrollY;
+        if (top >= end - 1 && top >= scrollY + innerHeight - 1) return; // 이미 화면/문서 끝에 있으면 늘릴 필요 없음
         const oe = E.style.cssText;
-        E.style.setProperty('min-height', `calc(100dvh - ${Math.round(top)}px + ${BUF}px)`, 'important'); // 그 블록 자신의 높이만 늘림 — 배경·다른 요소는 그대로
+        E.style.setProperty('min-height', `calc(100dvh - ${Math.round(top)}px)`, 'important'); // 그 블록 자신의 높이만 늘림 — 배경·다른 요소는 그대로
         E.style.setProperty('box-sizing', 'border-box', 'important');
         undo = () => { E.style.cssText = oe; };
     };
 
     /* ───── 설정 창 (iOS 26·27 메뉴처럼 버튼에서 유리 방울이 커지며 열림 + iOS 27 설정 앱 스타일) ───── */
 
-    const VER = 'SGU 3.2.0';
+    const VER = 'SGU 3.2.1';
     const SH = `
 :host{all:initial;position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;color:var(--c);font:16px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo",system-ui,sans-serif;--e:cubic-bezier(.32,.72,0,1);--sp:cubic-bezier(.32,.72,0,1);--g:255 255 255;--bgc:242 242 247;--card:rgb(255 255 255/.62);--c:#000;--c2:rgba(60,60,67,.6);--sep:rgba(60,60,67,.16);--off:rgba(120,120,128,.28);--rail:rgba(120,120,128,.3);--lens:rgba(255,255,255,.3);--gr:#34c759;--ring:rgba(0,0,0,.14);--hi:rgba(255,255,255,.75);--a:.4;--pa:.5;--tb:0px;--bo:max(env(safe-area-inset-bottom,0px),var(--tb))}
 @supports (-webkit-touch-callout:none){:host{--tb:100px}}
@@ -590,6 +590,8 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
             }
             // subtree:true 필수 — 대부분의 사이트는 <body> 바로 아래가 아니라 깊은 곳에 내용을 렌더링해서, 이게 없으면 나중에 그려지는 UI를 놓침
             document.body && mo.observe(document.body, { childList: true, subtree: true });
+            // 감시망에도 안 걸리는 변화(예: 같은 요소의 크기만 바뀌는 경우)에 대비해 페이지가 떠 있는 동안 계속 낮은 주기로 다시 확인 (탭이 백그라운드면 건너뜀)
+            setInterval(() => document.visibilityState === 'visible' && idle(run), 4000);
         };
         ready(start); // DOMContentLoaded 시점(문서 해석 직후) — 이미지 등 나머지 자원을 기다리는 'load'보다 훨씬 빠르게 첫 적용
     }
